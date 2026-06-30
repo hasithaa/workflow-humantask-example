@@ -1,0 +1,5 @@
+# Demo user store (PLAIN TEXT — demo only, never do this in production).
+# Format:  username:password:comma,separated,roles
+alice:alice123:reviewer
+bob:bob123:reviewer
+carol:carol123:reviewer,admin

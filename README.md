@@ -142,7 +142,47 @@ The tests run entirely in-memory and cover:
 `tests/shipping_mock.bal` stands in for the downstream service: orders whose id
 starts with `FAIL` return `500`, everything else succeeds.
 
-## Next iteration
+## Human Task UI
 
-Build a custom human-task UI under `humantask_ui/` that consumes the management
-API (`:8234/workflow/human-tasks`) to list, inspect, and complete review tasks.
+A custom reviewer UI lives in [`humantask_ui/`](humantask_ui) — a Vite + React
+SPA with a small backend-for-frontend (BFF) that authenticates users and injects
+the `x-user-id` / `x-user-roles` headers the management API expects. It provides
+three views: **Review Shipment Errors** (workflows → human tasks + failed
+activities), **Review Tasks**, and **Failed Activities**. See its
+[README](humantask_ui/README.md) for details.
+
+### Running the full demo (workflow app + management API + UI)
+
+The UI's list endpoints need a real backend, so run the workflow app in `LOCAL`
+mode against a Temporal dev server. `workflow/Config.local.toml` enables `LOCAL`
+mode, the management API, and (for the demo) disables management-side auth so the
+BFF can reach it.
+
+```bash
+# 1. Temporal dev server (provides the workflow backend on :7233)
+temporal server start-dev
+
+# 2. Workflow app + management API (:8080 app, :8234 management)
+cd workflow
+BAL_CONFIG_FILES=Config.local.toml bal run
+
+# 3. Reviewer UI (BFF on :3001, web on :5173)
+cd humantask_ui
+npm install
+npm run dev
+```
+
+Then trigger a few failing shipping requests (no real shipping service is
+running, so each starts a review workflow):
+
+```bash
+curl -s -X POST http://localhost:8080/processShippingRequest \
+  -H 'Content-Type: application/json' \
+  -d '{"orderId":"ORD-1","customerId":"CUST-1","shippingAddress":"1 Main St"}'
+```
+
+Open http://localhost:5173 and sign in as `alice` / `alice123`.
+
+> **Note:** `IN_MEMORY` mode (the default `Config.toml`) is great for `bal run`
+> curl demos and tests, but its global list endpoints are not implemented, so the
+> UI requires `LOCAL`/`SELF_HOSTED` mode as above.
