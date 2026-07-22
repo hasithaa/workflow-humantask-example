@@ -1,0 +1,10 @@
+{
+    "folders": [
+        {"path": "expense-approval"},
+        {"path": "loan-approval"},
+        {"path": "shipment-tracking"},
+        {"path": "customer-support-agent"},
+        {"path": "travel-desk-agents"}
+    ],
+    "settings": {}
+}

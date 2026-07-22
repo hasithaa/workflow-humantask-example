@@ -1,3 +1,0 @@
-# Tests run the workflow runtime in-memory — no external server required.
-[ballerina.workflow]
-mode = "IN_MEMORY"

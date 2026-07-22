@@ -1,0 +1,5 @@
+[ballerina.workflow]
+mode = "LOCAL"
+url = "localhost:7233"
+namespace = "default"
+taskQueue = "LOAN_APPROVAL_QUEUE"

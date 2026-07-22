@@ -1,0 +1,10 @@
+[ballerina.workflow]
+mode = "LOCAL"
+url = "localhost:7233"
+namespace = "default"
+taskQueue = "TRAVEL_DESK_QUEUE"
+
+# WSO2 default model provider — fill in before running.
+[ballerina.ai.wso2ProviderConfig]
+serviceUrl = "<WSO2_AI_SERVICE_URL>"
+accessToken = "<WSO2_AI_ACCESS_TOKEN>"

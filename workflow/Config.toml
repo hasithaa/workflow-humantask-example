@@ -1,5 +1,0 @@
-# Run the workflow runtime fully in-memory so the demo and tests need no
-# external Temporal/workflow server. Switch to LOCAL/SELF_HOSTED/CLOUD and set
-# `url` for a real deployment.
-[ballerina.workflow]
-mode = "IN_MEMORY"
