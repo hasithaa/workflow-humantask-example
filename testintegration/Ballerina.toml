@@ -1,0 +1,16 @@
+[package]
+org = "hasitha"
+name = "testintegration"
+version = "0.1.0"
+distribution = "2201.13.4"
+title = "TestIntegration"
+
+[build-options]
+sticky = true
+
+# Unreleased ICP bridge build, published to the local repository.
+[[dependency]]
+org = "wso2"
+name = "icp.runtime.bridge"
+version = "0.1.10"
+repository = "local"

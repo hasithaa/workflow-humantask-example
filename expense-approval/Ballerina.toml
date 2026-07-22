@@ -15,3 +15,10 @@ repository = "local"
 org = "ballerina"
 name = "ai"
 version = "1.11.2"
+
+# Unreleased ICP bridge build, published to the local repository.
+[[dependency]]
+org = "wso2"
+name = "icp.runtime.bridge"
+version = "0.1.10"
+repository = "local"
