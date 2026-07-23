@@ -34,7 +34,8 @@ bal run
 ```
 
 ```sh
-# 1. Submit a claim (starts the workflow)
+# 1. Submit a claim (starts the workflow); note the workflowId in the response —
+#    it is the claim reference in the calls below
 curl -X POST localhost:9096/expenses -H 'Content-Type: application/json' \
   -d '{"claimId":"EXP-1","employee":"nimal","amount":180.50,"currency":"EUR","purpose":"Team lunch"}'
 
@@ -42,13 +43,13 @@ curl -X POST localhost:9096/expenses -H 'Content-Type: application/json' \
 #    choose action REQUEST_BILL (or REJECT to end the claim)
 
 # 3. Submit the supporting bills (delivered to the waiting workflow as a data event)
-curl -X POST localhost:9096/expenses/EXP-1/bills -H 'Content-Type: application/json' \
+curl -X POST localhost:9096/expenses/<workflowId>/bills -H 'Content-Type: application/json' \
   -d '{"bills":[{"reference":"BILL-9","amount":180.50}]}'
 
 # 4. In the ICP task inbox, decide reviewBills: approve to reimburse, or reject
 
 # 5. Read the outcome (IN_REVIEW while a task or the bills are pending)
-curl localhost:9096/expenses/EXP-1
+curl localhost:9096/expenses/<workflowId>
 ```
 
 To see the **Human Review retry**, submit a claim with `"currency":"USD"` (or

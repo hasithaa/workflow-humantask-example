@@ -19,15 +19,19 @@ Content-Type: application/json
   "purpose": "Team lunch"
 }
 
-# md: #### GET /{claimId} — IN_REVIEW while checkExpenseRequest waits in the ICP inbox
+HTTP 201
+[Captures]
+workflowId: jsonpath "$.workflowId"
 
-GET http://localhost:9096/expenses/EXP-101
+# md: #### GET /{workflowId} — IN_REVIEW while checkExpenseRequest waits in the ICP inbox
+
+GET http://localhost:9096/expenses/{{workflowId}}
 
 # md: > In the ICP inbox: decide `checkExpenseRequest` with action `REQUEST_BILL`.
 
-# md: #### POST /{claimId}/bills — submit bills matching the claimed amount
+# md: #### POST /{workflowId}/bills — submit bills matching the claimed amount
 
-POST http://localhost:9096/expenses/EXP-101/bills
+POST http://localhost:9096/expenses/{{workflowId}}/bills
 Content-Type: application/json
 
 {
@@ -41,6 +45,6 @@ Content-Type: application/json
 
 # md: > In the ICP inbox: decide `reviewBills` (payload shows billsMatchClaim = true) — approve.
 
-# md: #### GET /{claimId} — APPROVED with the payment reference
+# md: #### GET /{workflowId} — APPROVED with the payment reference
 
-GET http://localhost:9096/expenses/EXP-101
+GET http://localhost:9096/expenses/{{workflowId}}

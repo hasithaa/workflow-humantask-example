@@ -29,10 +29,14 @@ Content-Type: application/json
   ]
 }
 
+HTTP 201
+[Captures]
+instanceId: jsonpath "$.instanceId"
+
 # md: > In the ICP inbox: approve the gated makePayment review. The gateway then
 # md: > rejects the USD payment and a retry review task appears — correct the
 # md: > currency (e.g. EUR) and retry from the ICP inbox.
 
-# md: #### GET /{claimId} — COMPLETED once the retried payment succeeds
+# md: #### GET /{instanceId} — COMPLETED once the retried payment succeeds
 
-GET http://localhost:9098/expenses/EXP-A104
+GET http://localhost:9098/expenses/{{instanceId}}

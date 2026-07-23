@@ -30,7 +30,8 @@ bal run
 ```
 
 ```sh
-# 1. Submit a claim without bills (the agent will ask for them)
+# 1. Submit a claim without bills (the agent will ask for them); note the
+#    instanceId in the response — it is the claim reference in the calls below
 curl -X POST localhost:9098/expenses -H 'Content-Type: application/json' \
   -d '{"claimId":"EXP-A1","employee":"nimal","amount":180.50,"currency":"EUR","purpose":"Team lunch"}'
 
@@ -38,14 +39,14 @@ curl -X POST localhost:9098/expenses -H 'Content-Type: application/json' \
 
 # 3. Submit the bills (delivered on the agent's billSubmitted channel; the reply is
 #    the agent's acknowledgement for this turn)
-curl -X POST localhost:9098/expenses/EXP-A1/bills -H 'Content-Type: application/json' \
+curl -X POST localhost:9098/expenses/<instanceId>/bills -H 'Content-Type: application/json' \
   -d '{"bills":[{"reference":"BILL-9","amount":180.50}]}'
 
 # 4. If the agent escalates (or when the gated reimbursement review fires), decide
 #    the approveExpense task in the ICP inbox (role: manager, e.g. alice)
 
 # 5. Read the outcome (PENDING_APPROVAL while the manager decides)
-curl localhost:9098/expenses/EXP-A1
+curl localhost:9098/expenses/<instanceId>
 ```
 
 Tip: submit mismatching bills (e.g. `"amount": 120.00`) to see the agent escalate

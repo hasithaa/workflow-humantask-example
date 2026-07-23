@@ -25,8 +25,12 @@ Content-Type: application/json
   ]
 }
 
+HTTP 201
+[Captures]
+instanceId: jsonpath "$.instanceId"
+
 # md: > In the ICP inbox: approve the gated makePayment review.
 
-# md: #### GET /{claimId} — COMPLETED (PENDING_APPROVAL while the review waits)
+# md: #### GET /{instanceId} — COMPLETED (PENDING_APPROVAL while the review waits)
 
-GET http://localhost:9098/expenses/EXP-A102
+GET http://localhost:9098/expenses/{{instanceId}}

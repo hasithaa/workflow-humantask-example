@@ -21,11 +21,15 @@ Content-Type: application/json
   "purpose": "Team lunch"
 }
 
+HTTP 201
+[Captures]
+instanceId: jsonpath "$.instanceId"
+
 # md: > Watch the service log: the agent's `requestBill` notification asks for the bills.
 
-# md: #### POST /{claimId}/bills — matching bills on the agent's billSubmitted channel
+# md: #### POST /{instanceId}/bills — matching bills on the agent's billSubmitted channel
 
-POST http://localhost:9098/expenses/EXP-A101/bills
+POST http://localhost:9098/expenses/{{instanceId}}/bills
 Content-Type: application/json
 
 {
@@ -39,6 +43,6 @@ Content-Type: application/json
 
 # md: > In the ICP inbox: approve the gated makePayment review when it appears.
 
-# md: #### GET /{claimId} — COMPLETED with the agent's summary (PENDING_APPROVAL while waiting)
+# md: #### GET /{instanceId} — COMPLETED with the agent's summary (PENDING_APPROVAL while waiting)
 
-GET http://localhost:9098/expenses/EXP-A101
+GET http://localhost:9098/expenses/{{instanceId}}

@@ -18,6 +18,10 @@ Content-Type: application/json
   "purpose": "Misc"
 }
 
-# md: #### GET /{claimId} — INVALID
+HTTP 201
+[Captures]
+workflowId: jsonpath "$.workflowId"
 
-GET http://localhost:9096/expenses/EXP-105
+# md: #### GET /{workflowId} — INVALID
+
+GET http://localhost:9096/expenses/{{workflowId}}

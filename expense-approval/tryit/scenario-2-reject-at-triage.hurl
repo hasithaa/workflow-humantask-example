@@ -18,8 +18,12 @@ Content-Type: application/json
   "purpose": "Conference tickets"
 }
 
+HTTP 201
+[Captures]
+workflowId: jsonpath "$.workflowId"
+
 # md: > In the ICP inbox: decide `checkExpenseRequest` with action `REJECT` and a comment.
 
-# md: #### GET /{claimId} — REJECTED
+# md: #### GET /{workflowId} — REJECTED
 
-GET http://localhost:9096/expenses/EXP-102
+GET http://localhost:9096/expenses/{{workflowId}}

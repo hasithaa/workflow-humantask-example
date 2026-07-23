@@ -49,55 +49,44 @@ employee with notifyEmployee, and finish with a one-line summary of the outcome.
     maxIter: 16
 });
 
-map<string> agentClaims = {};
-
 service /expenses on new http:Listener(9098) {
 
     # Submits an expense claim to the approval agent.
     #
     # + claim - The expense claim
-    # + return - The claim and agent instance identifiers, or an error
+    # + return - The agent instance identifier used as the claim reference, or an error
     resource function post .(ExpenseClaim claim) returns json|error {
         string instanceId = check expenseAgent.run(claim.toJsonString());
-        agentClaims[claim.claimId] = instanceId;
         return {claimId: claim.claimId, instanceId, status: "PROCESSING"};
     }
 
     # Submits the supporting bills for a claim on the agent's billSubmitted channel and
     # waits for the agent's acknowledgement of that turn.
     #
-    # + claimId - The claim identifier
+    # + instanceId - The agent instance identifier returned when the claim was submitted
     # + submission - The bills
     # + return - The agent's reply, or an error
-    resource function post [string claimId]/bills(BillSubmission submission) returns json|error {
-        string? instanceId = agentClaims[claimId];
-        if instanceId is () {
-            return error(string `unknown claim: ${claimId}`);
-        }
+    resource function post [string instanceId]/bills(BillSubmission submission) returns json|error {
         string token = check expenseAgent.sendEvent(instanceId, "billSubmitted", submission);
         string reply = check expenseAgent.waitForEventResult(instanceId, token);
-        return {claimId, reply};
+        return {instanceId, reply};
     }
 
     # Reads the outcome of a claim without blocking: while the agent is waiting on the
     # manager (the approveExpense task or the reimbursement review) the claim reports
     # PENDING_APPROVAL.
     #
-    # + claimId - The claim identifier
+    # + instanceId - The agent instance identifier returned when the claim was submitted
     # + return - The agent's summary or the in-progress status, or an error
-    resource function get [string claimId]() returns json|error {
-        string? instanceId = agentClaims[claimId];
-        if instanceId is () {
-            return error(string `unknown claim: ${claimId}`);
-        }
+    resource function get [string instanceId]() returns json|error {
         string|error result = expenseAgent.getResult(instanceId);
         if result is workflow:AgentBusyError {
-            return {claimId, status: "PENDING_APPROVAL"};
+            return {instanceId, status: "PENDING_APPROVAL"};
         }
         if result is error {
             return result;
         }
-        return {claimId, status: "COMPLETED", summary: result};
+        return {instanceId, status: "COMPLETED", summary: result};
     }
 }
 
@@ -107,8 +96,9 @@ service /expenses on new http:Listener(9098) {
 public function main() returns error? {
     io:println("Expense approval agent listening on http://localhost:9098/expenses");
     io:println("  1. Submit (no bills): curl -X POST localhost:9098/expenses -H 'Content-Type: application/json' -d '{\"claimId\":\"EXP-A1\",\"employee\":\"nimal\",\"amount\":180.50,\"currency\":\"EUR\",\"purpose\":\"Team lunch\"}'");
+    io:println("     -> note the instanceId in the response; it is the claim reference below");
     io:println("  2. The agent asks for the bills (requestBill notification in this log)");
-    io:println("  3. Submit bills: curl -X POST localhost:9098/expenses/EXP-A1/bills -H 'Content-Type: application/json' -d '{\"bills\":[{\"reference\":\"BILL-9\",\"amount\":180.50}]}'");
+    io:println("  3. Submit bills: curl -X POST localhost:9098/expenses/<instanceId>/bills -H 'Content-Type: application/json' -d '{\"bills\":[{\"reference\":\"BILL-9\",\"amount\":180.50}]}'");
     io:println("  4. Decide the approveExpense task in the ICP inbox when the agent creates one (role: manager)");
-    io:println("  5. Status: curl localhost:9098/expenses/EXP-A1");
+    io:println("  5. Status: curl localhost:9098/expenses/<instanceId>");
 }

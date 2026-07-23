@@ -22,11 +22,15 @@ Content-Type: application/json
   "purpose": "Team lunch"
 }
 
+HTTP 201
+[Captures]
+instanceId: jsonpath "$.instanceId"
+
 # md: > Watch the service log for the agent's requestBill notification.
 
-# md: #### POST /{claimId}/bills — bills that do NOT match the claim
+# md: #### POST /{instanceId}/bills — bills that do NOT match the claim
 
-POST http://localhost:9098/expenses/EXP-A103/bills
+POST http://localhost:9098/expenses/{{instanceId}}/bills
 Content-Type: application/json
 
 {
@@ -40,6 +44,6 @@ Content-Type: application/json
 
 # md: > In the ICP inbox: the agent escalates — decide `approveExpense` (approve or reject).
 
-# md: #### GET /{claimId} — the agent's outcome (PENDING_APPROVAL while the task waits)
+# md: #### GET /{instanceId} — the agent's outcome (PENDING_APPROVAL while the task waits)
 
-GET http://localhost:9098/expenses/EXP-A103
+GET http://localhost:9098/expenses/{{instanceId}}

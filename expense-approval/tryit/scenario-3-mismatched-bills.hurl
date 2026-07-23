@@ -19,11 +19,15 @@ Content-Type: application/json
   "purpose": "Team lunch"
 }
 
+HTTP 201
+[Captures]
+workflowId: jsonpath "$.workflowId"
+
 # md: > In the ICP inbox: decide `checkExpenseRequest` with action `REQUEST_BILL`.
 
-# md: #### POST /{claimId}/bills — bills do NOT add up to the claim
+# md: #### POST /{workflowId}/bills — bills do NOT add up to the claim
 
-POST http://localhost:9096/expenses/EXP-103/bills
+POST http://localhost:9096/expenses/{{workflowId}}/bills
 Content-Type: application/json
 
 {
@@ -37,6 +41,6 @@ Content-Type: application/json
 
 # md: > In the ICP inbox: `reviewBills` shows billsMatchClaim = false — reject with a comment.
 
-# md: #### GET /{claimId} — REJECTED
+# md: #### GET /{workflowId} — REJECTED
 
-GET http://localhost:9096/expenses/EXP-103
+GET http://localhost:9096/expenses/{{workflowId}}

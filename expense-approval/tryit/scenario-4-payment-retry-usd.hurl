@@ -24,11 +24,15 @@ Content-Type: application/json
   "purpose": "Client dinner"
 }
 
+HTTP 201
+[Captures]
+workflowId: jsonpath "$.workflowId"
+
 # md: > In the ICP inbox: decide `checkExpenseRequest` with action `REQUEST_BILL`.
 
-# md: #### POST /{claimId}/bills — matching bills
+# md: #### POST /{workflowId}/bills — matching bills
 
-POST http://localhost:9096/expenses/EXP-104/bills
+POST http://localhost:9096/expenses/{{workflowId}}/bills
 Content-Type: application/json
 
 {
@@ -44,6 +48,6 @@ Content-Type: application/json
 # md: > currency and a retry review task appears — correct the currency (e.g. EUR)
 # md: > and retry the activity from the ICP inbox.
 
-# md: #### GET /{claimId} — APPROVED once the retried payment succeeds
+# md: #### GET /{workflowId} — APPROVED once the retried payment succeeds
 
-GET http://localhost:9096/expenses/EXP-104
+GET http://localhost:9096/expenses/{{workflowId}}
