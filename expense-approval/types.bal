@@ -50,11 +50,19 @@ public type BillSubmission record {|
     Bill[] bills;
 |};
 
+# The manager's action on a newly submitted expense request: ask the employee
+# for the supporting bills, or reject the claim. Rendered as a dropdown in the
+# ICP task form.
+public enum RequestAction {
+    REQUEST_BILL,
+    REJECT
+}
+
 # The manager's decision on a newly submitted expense request.
 #
 # + action - REQUEST_BILL to ask the employee for the supporting bills, or REJECT
 # + comment - Reviewer comment shown to the employee
 public type RequestDecision record {|
-    string action;
+    RequestAction action;
     string comment = "";
 |};

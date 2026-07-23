@@ -2,9 +2,6 @@ import ballerina/http;
 import ballerina/io;
 import ballerina/workflow;
 import ballerina/workflow.management;
-import ballerinax/metrics.logs as _;
-
-import wso2/icp.runtime.bridge as _;
 
 service /expenses on new http:Listener(9096) {
 

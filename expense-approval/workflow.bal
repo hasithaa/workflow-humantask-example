@@ -23,7 +23,7 @@ function expenseApprovalWorkflow(workflow:Context ctx, ExpenseClaim claim,
                 title = string `Check expense request ${claim.claimId}`,
                 description = "Review the new claim: request the supporting bills, or reject it.",
                 timeout = {days: 3});
-        if request.action == "REJECT" {
+        if request.action == REJECT {
             string _ = check ctx->callActivity(notifyEmployee,
                     {"claimId": claim.claimId, "message": string `Claim rejected: ${request.comment}`},
                     retryPolicy = {maxRetries: 3, retryDelay: 2});
