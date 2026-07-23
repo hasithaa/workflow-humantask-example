@@ -57,6 +57,24 @@ ICP inbox where the manager can correct the currency and retry. The **Auto
 Retry** shows up in the service log — every other `notifyEmployee` call fails
 and is retried by the engine.
 
+## Scenario scripts
+
+Ready-made request sequences in [`tryit/`](tryit/) (same format as the generated
+`target/TryIt.hurl`). Run them with [hurl](https://hurl.dev) in interactive mode
+so you can decide the ICP inbox tasks between steps:
+
+```sh
+hurl --interactive tryit/scenario-1-happy-path.hurl
+```
+
+| Scenario | Shows |
+|---|---|
+| [1 — happy path](tryit/scenario-1-happy-path.hurl) | Both tasks approved, claim paid |
+| [2 — reject at triage](tryit/scenario-2-reject-at-triage.hurl) | Manager rejects `checkExpenseRequest` |
+| [3 — mismatched bills](tryit/scenario-3-mismatched-bills.hurl) | `reviewBills` payload flags `billsMatchClaim: false` |
+| [4 — payment retry (USD)](tryit/scenario-4-payment-retry-usd.hurl) | Human Review retry: fix the currency in the ICP inbox |
+| [5 — invalid claim](tryit/scenario-5-invalid-claim.hurl) | Fails validation, no human task |
+
 ## Requirements
 
 - `ballerina/workflow` **0.8.0** and `wso2/icp.runtime.bridge` in the **local** repository.

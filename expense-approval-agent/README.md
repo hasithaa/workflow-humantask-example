@@ -52,6 +52,23 @@ Tip: submit mismatching bills (e.g. `"amount": 120.00`) to see the agent escalat
 to the human task, or submit the claim with `"currency":"USD"` to see the payment
 fail into a manager retry review after the gated approval.
 
+## Scenario scripts
+
+Ready-made request sequences in [`tryit/`](tryit/) (same format as the generated
+`target/TryIt.hurl`). Run them with [hurl](https://hurl.dev) in interactive mode
+so you can decide the ICP inbox reviews between steps:
+
+```sh
+hurl --interactive tryit/scenario-1-happy-path.hurl
+```
+
+| Scenario | Shows |
+|---|---|
+| [1 — happy path](tryit/scenario-1-happy-path.hurl) | Agent requests the missing bills, then completes |
+| [2 — bills upfront](tryit/scenario-2-bills-upfront.hurl) | Agent skips the bill request entirely |
+| [3 — mismatched bills](tryit/scenario-3-mismatched-bills-escalation.hurl) | Agent escalates to the `approveExpense` task |
+| [4 — payment retry (USD)](tryit/scenario-4-payment-retry-usd.hurl) | Human Review retry after the gated approval |
+
 ## Requirements
 
 - `ballerina/workflow` **0.8.0** and `wso2/icp.runtime.bridge` in the **local** repository.
