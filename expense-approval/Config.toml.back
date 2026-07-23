@@ -1,0 +1,22 @@
+
+[wso2.icp.runtime.bridge]
+environment = "dev"
+project = "expense-approval"
+integration = "Expense Approval"
+runtime = "hasitha.local"
+secret = "<ICP_RUNTIME_SECRET>"
+#serverUrl="https://<hostname>:9445"
+
+[ballerina.workflow]
+mode = "LOCAL"
+url = "localhost:7233"
+namespace = "default"
+taskQueue = "EXPENSE_APPROVAL_QUEUE"
+
+[ballerina.workflow.management]
+enableManagementApi = true
+enableApiKey = true
+apiKeyValue = "<ICP_RUNTIME_SECRET>"
+apiKeyHeader = "X-API-Key"
+enableBasicAuth = false
+

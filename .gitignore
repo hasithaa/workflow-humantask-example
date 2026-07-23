@@ -1,2 +1,10 @@
+# Local runtime configuration carries secrets (ICP runtime secret, model provider
+# tokens): keep it untracked. Copy Config.toml.back to Config.toml and fill in.
+Config.toml
+!Config.toml.back
+
+# Build artifacts and per-machine runtime state
 target/
-node_modules/
+Dependencies.toml
+.icp_runtime_id
+.DS_Store

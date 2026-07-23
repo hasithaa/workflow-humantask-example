@@ -13,6 +13,7 @@ packages as one workspace.
 | --- | --- | --- |
 | [`loan-approval`](loan-approval/) | Loan origination | **Child workflows**: fan-out/fan-in (`runChildWorkflow` / `waitForChildWorkflow`), data events to children (`sendDataToChildWorkflow`), synchronous composition (`callWorkflow`) |
 | [`expense-approval`](expense-approval/) | Expense reimbursement | **Human task**: `ctx->awaitHumanTask` with typed decision, payload, roles and timeout; completed via `workflow:completeHumanTask` |
+| [`expense-approval-agent`](expense-approval-agent/) | Expense reimbursement | **Agentic version of expense-approval**: the same activities and human task on a `workflow:DurableAgent` declaration, flow decided by the model |
 | [`shipment-tracking`](shipment-tracking/) | Courier tracking | **Data events**: two `future` data events (`pickedUp`, `delivered`) driven by `workflow:sendData` callbacks |
 | [`customer-support-agent`](customer-support-agent/) | Support triage | **Single durable agent**: activities, approval-gated refunds, AI tool, human-task escalation, multi-turn conversation channel |
 | [`travel-desk-agents`](travel-desk-agents/) | Trip planning | **Multi-agent / A2A**: coordinator + two specialist peer agents, synchronous and asynchronous (callback channel) delegation |
@@ -53,7 +54,15 @@ build does not shadow the new one. `ballerina/ai` is pinned to 1.11.2 (the
    temporal server start-dev
    ```
 
-2. **Model provider** (agent examples only) — fill in
+2. **Configuration** — `Config.toml` is git-ignored because it carries secrets
+   (the ICP runtime secret, model provider tokens). Each package commits a
+   scrubbed `Config.toml.back`: copy it and fill in the placeholders:
+
+   ```sh
+   cp Config.toml.back Config.toml
+   ```
+
+3. **Model provider** (agent examples only) — fill in
    `[ballerina.ai.wso2ProviderConfig]` (serviceUrl + accessToken) in the
    package's `Config.toml`.
 

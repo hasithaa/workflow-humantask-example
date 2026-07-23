@@ -16,9 +16,20 @@ temporal server start-dev   # in another terminal
 bal run
 ```
 
-Then drive it with the three `curl` commands the service prints: submit a claim,
-complete the pending `approveExpense` task (task workflow IDs are visible in the
-task inbox / Temporal UI), and read the outcome.
+```sh
+# 1. Submit a claim (starts the approval workflow)
+curl -X POST localhost:9096/expenses -H 'Content-Type: application/json' \
+  -d '{"claimId":"EXP-1","employee":"nimal","amount":180.50,"purpose":"Team lunch"}'
+
+# 2. Approve (or reject) the pending approveExpense task. Complete it from the ICP
+#    task inbox (role: manager, e.g. alice), or via the API using the task workflow ID
+#    shown in the inbox / Temporal UI:
+curl -X POST localhost:9096/expenses/tasks/<taskWorkflowId> -H 'Content-Type: application/json' \
+  -d '{"approved":true,"comment":"ok"}'
+
+# 3. Read the outcome (PENDING_APPROVAL until the manager decides)
+curl localhost:9096/expenses/EXP-1
+```
 
 ## Requirements
 

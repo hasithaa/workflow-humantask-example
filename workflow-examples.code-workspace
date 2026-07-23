@@ -1,6 +1,7 @@
 {
     "folders": [
         {"path": "expense-approval"},
+        {"path": "expense-approval-agent"},
         {"path": "loan-approval"},
         {"path": "shipment-tracking"},
         {"path": "customer-support-agent"},
