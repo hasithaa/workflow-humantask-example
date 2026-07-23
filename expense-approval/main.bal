@@ -2,9 +2,6 @@ import ballerina/http;
 import ballerina/io;
 import ballerina/workflow;
 import ballerina/workflow.management;
-import ballerinax/metrics.logs as _;
-
-import wso2/icp.runtime.bridge as _;
 
 map<string> claimWorkflows = {};
 
@@ -17,17 +14,22 @@ service /expenses on new http:Listener(9096) {
     resource function post .(ExpenseClaim claim) returns json|error {
         string workflowId = check workflow:run(expenseApprovalWorkflow, claim);
         claimWorkflows[claim.claimId] = workflowId;
-        return {claimId: claim.claimId, workflowId, status: "PENDING_APPROVAL"};
+        return {claimId: claim.claimId, workflowId, status: "PENDING_REVIEW"};
     }
 
-    # Completes the pending approval human task for a claim.
+    # Submits the supporting bills for a claim; the workflow is durably waiting on them
+    # after the manager requests the bills.
     #
-    # + taskWorkflowId - The human task's workflow ID (visible in the task inbox / Temporal UI)
-    # + decision - The manager's decision
+    # + claimId - The claim identifier
+    # + submission - The bills
     # + return - A confirmation, or an error
-    resource function post tasks/[string taskWorkflowId](ApprovalDecision decision) returns json|error {
-        check workflow:completeHumanTask(taskWorkflowId, decision, ["manager"], "manager@acme.com");
-        return {taskWorkflowId, status: "COMPLETED"};
+    resource function post [string claimId]/bills(BillSubmission submission) returns json|error {
+        string? workflowId = claimWorkflows[claimId];
+        if workflowId is () {
+            return error(string `unknown claim: ${claimId}`);
+        }
+        check workflow:sendData(expenseApprovalWorkflow, workflowId, "billSubmitted", submission);
+        return {claimId, status: "BILLS_SUBMITTED"};
     }
 
     # Reads the outcome of a claim's workflow.
@@ -41,7 +43,7 @@ service /expenses on new http:Listener(9096) {
         }
         management:WorkflowExecutionInfo info = check management:getWorkflowInfo(workflowId);
         if info.status == "RUNNING" {
-            return {claimId, status: "PENDING_APPROVAL"};
+            return {claimId, status: "IN_REVIEW"};
         }
         anydata result = check workflow:getWorkflowResult(workflowId, 30);
         return {claimId, result: check result.cloneWithType(json)};
@@ -53,7 +55,9 @@ service /expenses on new http:Listener(9096) {
 # + return - An error when startup fails
 public function main() returns error? {
     io:println("Expense approval service listening on http://localhost:9096/expenses");
-    io:println("  1. Submit:  curl -X POST localhost:9096/expenses -H 'Content-Type: application/json' -d '{\"claimId\":\"EXP-1\",\"employee\":\"nimal\",\"amount\":180.50,\"purpose\":\"Team lunch\"}'");
-    io:println("  2. Approve: curl -X POST localhost:9096/expenses/tasks/<taskWorkflowId> -H 'Content-Type: application/json' -d '{\"approved\":true,\"comment\":\"ok\"}'");
-    io:println("  3. Status:  curl localhost:9096/expenses/EXP-1");
+    io:println("  1. Submit claim: curl -X POST localhost:9096/expenses -H 'Content-Type: application/json' -d '{\"claimId\":\"EXP-1\",\"employee\":\"nimal\",\"amount\":180.50,\"purpose\":\"Team lunch\"}'");
+    io:println("  2. Decide the checkExpenseRequest task in the ICP inbox (role: manager)");
+    io:println("  3. Submit bills: curl -X POST localhost:9096/expenses/EXP-1/bills -H 'Content-Type: application/json' -d '{\"bills\":[{\"reference\":\"BILL-9\",\"amount\":180.50}]}'");
+    io:println("  4. Decide the reviewBills task in the ICP inbox (role: manager)");
+    io:println("  5. Status: curl localhost:9096/expenses/EXP-1");
 }

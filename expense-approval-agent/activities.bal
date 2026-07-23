@@ -1,3 +1,4 @@
+import ballerina/io;
 import ballerina/workflow;
 
 # Validates an expense claim against the expense policy.
@@ -27,4 +28,33 @@ function processReimbursement(string claimId, decimal amount) returns string|err
 @workflow:Activity
 function notifyEmployee(string claimId, string message) returns string|error {
     return string `NOTIF-${claimId}`;
+}
+
+# Checks the submitted bills against the claim: at least one bill, and the billed
+# total must match the claimed amount.
+#
+# + claim - The original claim
+# + submission - The submitted bills
+# + return - `true` when the bills support the claim, or an error
+@workflow:Activity
+function validateBills(ExpenseClaim claim, BillSubmission submission) returns boolean|error {
+    if submission.bills.length() == 0 {
+        return false;
+    }
+    decimal total = 0;
+    foreach Bill bill in submission.bills {
+        total += bill.amount;
+    }
+    return total == claim.amount;
+}
+
+# Notifies the employee that the supporting bills are required before the claim
+# can be processed (a println stand-in for a real notification channel).
+#
+# + claimId - The claim identifier
+# + return - A delivery reference, or an error
+@workflow:Activity
+function requestBill(string claimId) returns string|error {
+    io:println(string `[notification] Claim ${claimId}: please submit the supporting bills.`);
+    return string `BILLREQ-${claimId}`;
 }

@@ -12,8 +12,8 @@ packages as one workspace.
 | Package | Scenario | What it demonstrates |
 | --- | --- | --- |
 | [`loan-approval`](loan-approval/) | Loan origination | **Child workflows**: fan-out/fan-in (`runChildWorkflow` / `waitForChildWorkflow`), data events to children (`sendDataToChildWorkflow`), synchronous composition (`callWorkflow`) |
-| [`expense-approval`](expense-approval/) | Expense reimbursement | **Human task**: `ctx->awaitHumanTask` with typed decision, payload, roles and timeout; completed via `workflow:completeHumanTask` |
-| [`expense-approval-agent`](expense-approval-agent/) | Expense reimbursement | **Agentic version of expense-approval**: the same activities and human task on a `workflow:DurableAgent` declaration, flow decided by the model |
+| [`expense-approval`](expense-approval/) | Expense reimbursement | **Two human tasks + a data event**: request check, bill submission (`workflow:sendData`), bill review — all decided in the ICP inbox |
+| [`expense-approval-agent`](expense-approval-agent/) | Expense reimbursement | **Agentic version of expense-approval**: one human task instead of two — the agent requests/validates bills itself and escalates only when needed |
 | [`shipment-tracking`](shipment-tracking/) | Courier tracking | **Data events**: two `future` data events (`pickedUp`, `delivered`) driven by `workflow:sendData` callbacks |
 | [`customer-support-agent`](customer-support-agent/) | Support triage | **Single durable agent**: activities, approval-gated refunds, AI tool, human-task escalation, multi-turn conversation channel |
 | [`travel-desk-agents`](travel-desk-agents/) | Trip planning | **Multi-agent / A2A**: coordinator + two specialist peer agents, synchronous and asynchronous (callback channel) delegation |

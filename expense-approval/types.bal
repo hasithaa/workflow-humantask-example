@@ -30,3 +30,28 @@ public type ExpenseResult record {|
     string status;
     string paymentRef?;
 |};
+
+# A supporting bill attached to an expense claim.
+#
+# + reference - Bill or receipt reference
+# + amount - Billed amount
+public type Bill record {|
+    string reference;
+    decimal amount;
+|};
+
+# The employee's bill submission for a claim.
+#
+# + bills - The supporting bills
+public type BillSubmission record {|
+    Bill[] bills;
+|};
+
+# The manager's decision on a newly submitted expense request.
+#
+# + action - REQUEST_BILL to ask the employee for the supporting bills, or REJECT
+# + comment - Reviewer comment shown to the employee
+public type RequestDecision record {|
+    string action;
+    string comment = "";
+|};

@@ -9,27 +9,36 @@ final workflow:DurableAgent expenseAgent = check new ({
     systemPrompt: {
         role: "Expense approval assistant",
         instructions: string `Process expense claims end to end. Validate the claim with
-validateClaim first; reject invalid claims with a clear reason. Valid claims need a
-manager's decision through the approveExpense human task — never reimburse without an
-approval. On approval call processReimbursement and notify the employee with the payment
-reference; on rejection notify the employee with the rejection reason. Finish with a
-one-line summary of the outcome.`
+validateClaim first; reject invalid claims with a clear reason. Then check whether the
+claim already includes supporting bills. If it does not, call requestBill to notify the
+employee and wait — the bills arrive later on the billSubmitted channel. Once you have
+the bills, check them with validateBills (there must be at least one bill and the billed
+total must match the claimed amount). If the bills check out and the reimbursement is
+straightforward, proceed; if anything looks off — mismatched totals, missing bills, or an
+unusually large amount — create the approveExpense human task and follow the manager's
+decision. Reimburse with processReimbursement, notify the employee with notifyEmployee,
+and finish with a one-line summary of the outcome.`
     },
     model: expenseModel,
     activities: [
         validateClaim,
+        requestBill,
+        validateBills,
         {activity: processReimbursement, requiresApproval: true, userRoles: "manager"},
         notifyEmployee
+    ],
+    events: [
+        {name: "billSubmitted", request: BillSubmission, response: string}
     ],
     humanTasks: [
         {
             name: "approveExpense",
             roles: "manager",
             title: "Approve expense claim",
-            description: "Review the claim details and approve or reject the reimbursement."
+            description: "Review the claim and bills, then approve or reject the reimbursement."
         }
     ],
-    maxIter: 12
+    maxIter: 16
 });
 
 map<string> agentClaims = {};
@@ -44,6 +53,22 @@ service /expenses on new http:Listener(9098) {
         string instanceId = check expenseAgent.run(claim.toJsonString());
         agentClaims[claim.claimId] = instanceId;
         return {claimId: claim.claimId, instanceId, status: "PROCESSING"};
+    }
+
+    # Submits the supporting bills for a claim on the agent's billSubmitted channel and
+    # waits for the agent's acknowledgement of that turn.
+    #
+    # + claimId - The claim identifier
+    # + submission - The bills
+    # + return - The agent's reply, or an error
+    resource function post [string claimId]/bills(BillSubmission submission) returns json|error {
+        string? instanceId = agentClaims[claimId];
+        if instanceId is () {
+            return error(string `unknown claim: ${claimId}`);
+        }
+        string token = check expenseAgent.sendEvent(instanceId, "billSubmitted", submission);
+        string reply = check expenseAgent.waitForEventResult(instanceId, token);
+        return {claimId, reply};
     }
 
     # Reads the outcome of a claim without blocking: while the agent is waiting on the
@@ -73,7 +98,9 @@ service /expenses on new http:Listener(9098) {
 # + return - An error when startup fails
 public function main() returns error? {
     io:println("Expense approval agent listening on http://localhost:9098/expenses");
-    io:println("  1. Submit: curl -X POST localhost:9098/expenses -H 'Content-Type: application/json' -d '{\"claimId\":\"EXP-A1\",\"employee\":\"nimal\",\"amount\":180.50,\"purpose\":\"Team lunch\"}'");
-    io:println("  2. Decide the approveExpense task in the ICP inbox (role: manager)");
-    io:println("  3. Status: curl localhost:9098/expenses/EXP-A1");
+    io:println("  1. Submit (no bills): curl -X POST localhost:9098/expenses -H 'Content-Type: application/json' -d '{\"claimId\":\"EXP-A1\",\"employee\":\"nimal\",\"amount\":180.50,\"purpose\":\"Team lunch\"}'");
+    io:println("  2. The agent asks for the bills (requestBill notification in this log)");
+    io:println("  3. Submit bills: curl -X POST localhost:9098/expenses/EXP-A1/bills -H 'Content-Type: application/json' -d '{\"bills\":[{\"reference\":\"BILL-9\",\"amount\":180.50}]}'");
+    io:println("  4. Decide the approveExpense task in the ICP inbox when the agent creates one (role: manager)");
+    io:println("  5. Status: curl localhost:9098/expenses/EXP-A1");
 }
