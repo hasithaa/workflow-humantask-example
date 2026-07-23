@@ -16,16 +16,24 @@ the bills, check them with validateBills (there must be at least one bill and th
 total must match the claimed amount). If the bills check out and the reimbursement is
 straightforward, proceed; if anything looks off — mismatched totals, missing bills, or an
 unusually large amount — create the approveExpense human task and follow the manager's
-decision. Reimburse with processReimbursement, notify the employee with notifyEmployee,
-and finish with a one-line summary of the outcome.`
+decision. Pay the reimbursement with makePayment using the claim's currency, notify the
+employee with notifyEmployee, and finish with a one-line summary of the outcome.`
     },
     model: expenseModel,
     activities: [
         validateClaim,
         requestBill,
         validateBills,
-        {activity: processReimbursement, requiresApproval: true, userRoles: "manager"},
-        notifyEmployee
+        {
+            activity: makePayment,
+            requiresApproval: true,
+            userRoles: "manager",
+            retryPolicy: "manager"
+        },
+        {
+            activity: notifyEmployee,
+            retryPolicy: {maxRetries: 3, retryDelay: 2}
+        }
     ],
     events: [
         {name: "billSubmitted", request: BillSubmission, response: string}
@@ -98,7 +106,7 @@ service /expenses on new http:Listener(9098) {
 # + return - An error when startup fails
 public function main() returns error? {
     io:println("Expense approval agent listening on http://localhost:9098/expenses");
-    io:println("  1. Submit (no bills): curl -X POST localhost:9098/expenses -H 'Content-Type: application/json' -d '{\"claimId\":\"EXP-A1\",\"employee\":\"nimal\",\"amount\":180.50,\"purpose\":\"Team lunch\"}'");
+    io:println("  1. Submit (no bills): curl -X POST localhost:9098/expenses -H 'Content-Type: application/json' -d '{\"claimId\":\"EXP-A1\",\"employee\":\"nimal\",\"amount\":180.50,\"currency\":\"EUR\",\"purpose\":\"Team lunch\"}'");
     io:println("  2. The agent asks for the bills (requestBill notification in this log)");
     io:println("  3. Submit bills: curl -X POST localhost:9098/expenses/EXP-A1/bills -H 'Content-Type: application/json' -d '{\"bills\":[{\"reference\":\"BILL-9\",\"amount\":180.50}]}'");
     io:println("  4. Decide the approveExpense task in the ICP inbox when the agent creates one (role: manager)");

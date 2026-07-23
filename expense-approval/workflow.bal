@@ -2,7 +2,9 @@ import ballerina/workflow;
 
 # Processes one expense claim with two manager reviews: first the request check
 # (ask for the supporting bills, or reject), then — once the employee submits the
-# bills as a data event — the bill review that decides the reimbursement.
+# bills as a data event — the bill review that decides the reimbursement. The
+# payment carries a Human Review retry policy (gateway rejections become a manager
+# retry review) and notifications carry an Auto Retry policy.
 #
 # + ctx - The workflow context
 # + claim - The submitted claim
@@ -14,41 +16,46 @@ function expenseApprovalWorkflow(workflow:Context ctx, ExpenseClaim claim,
     boolean valid = check ctx->callActivity(validateClaim, {"claim": claim});
     if !valid {
         return {claimId: claim.claimId, status: "INVALID"};
+    } else {
+        RequestDecision request = check ctx->awaitHumanTask("checkExpenseRequest", "manager",
+                payload = {"claimId": claim.claimId, "employee": claim.employee,
+                    "amount": claim.amount, "purpose": claim.purpose},
+                title = string `Check expense request ${claim.claimId}`,
+                description = "Review the new claim: request the supporting bills, or reject it.",
+                timeout = {days: 3});
+        if request.action == "REJECT" {
+            string _ = check ctx->callActivity(notifyEmployee,
+                    {"claimId": claim.claimId, "message": string `Claim rejected: ${request.comment}`},
+                    retryPolicy = {maxRetries: 3, retryDelay: 2});
+            return {claimId: claim.claimId, status: "REJECTED"};
+        } else {
+            string _ = check ctx->callActivity(notifyEmployee,
+                    {"claimId": claim.claimId, "message": "Please submit the supporting bills for your claim."},
+                    retryPolicy = {maxRetries: 3, retryDelay: 2});
+            BillSubmission submission = check wait dataEvents.billSubmitted;
+            boolean billsValid = check ctx->callActivity(validateBills,
+                    {"claim": claim, "submission": submission});
+
+            ApprovalDecision decision = check ctx->awaitHumanTask("reviewBills", "manager",
+                    payload = {"claimId": claim.claimId, "amount": claim.amount,
+                        "billCount": submission.bills.length(), "billsMatchClaim": billsValid},
+                    title = string `Review bills for claim ${claim.claimId}`,
+                    description = "Verify the submitted bills and approve or reject the reimbursement.",
+                    timeout = {days: 3});
+            if decision.approved {
+                string paymentRef = check ctx->callActivity(makePayment,
+                        {"claimId": claim.claimId, "amount": claim.amount, "currency": claim.currency},
+                        retryPolicy = "manager");
+                string _ = check ctx->callActivity(notifyEmployee,
+                        {"claimId": claim.claimId, "message": string `Claim approved and paid: ${paymentRef}`},
+                        retryPolicy = {maxRetries: 3, retryDelay: 2});
+                return {claimId: claim.claimId, status: "APPROVED", paymentRef};
+            } else {
+                string _ = check ctx->callActivity(notifyEmployee,
+                        {"claimId": claim.claimId, "message": string `Claim rejected: ${decision.comment}`},
+                        retryPolicy = {maxRetries: 3, retryDelay: 2});
+                return {claimId: claim.claimId, status: "REJECTED"};
+            }
+        }
     }
-
-    RequestDecision request = check ctx->awaitHumanTask("checkExpenseRequest", "manager",
-            payload = {"claimId": claim.claimId, "employee": claim.employee,
-                "amount": claim.amount, "purpose": claim.purpose},
-            title = string `Check expense request ${claim.claimId}`,
-            description = "Review the new claim: request the supporting bills, or reject it.",
-            timeout = {days: 3});
-    if request.action == "REJECT" {
-        string _ = check ctx->callActivity(notifyEmployee,
-                {"claimId": claim.claimId, "message": string `Claim rejected: ${request.comment}`});
-        return {claimId: claim.claimId, status: "REJECTED"};
-    }
-
-    string _ = check ctx->callActivity(notifyEmployee,
-            {"claimId": claim.claimId, "message": "Please submit the supporting bills for your claim."});
-    BillSubmission submission = check wait dataEvents.billSubmitted;
-    boolean billsValid = check ctx->callActivity(validateBills,
-            {"claim": claim, "submission": submission});
-
-    ApprovalDecision decision = check ctx->awaitHumanTask("reviewBills", "manager",
-            payload = {"claimId": claim.claimId, "amount": claim.amount,
-                "billCount": submission.bills.length(), "billsMatchClaim": billsValid},
-            title = string `Review bills for claim ${claim.claimId}`,
-            description = "Verify the submitted bills and approve or reject the reimbursement.",
-            timeout = {days: 3});
-    if !decision.approved {
-        string _ = check ctx->callActivity(notifyEmployee,
-                {"claimId": claim.claimId, "message": string `Claim rejected: ${decision.comment}`});
-        return {claimId: claim.claimId, status: "REJECTED"};
-    }
-
-    string paymentRef = check ctx->callActivity(processReimbursement,
-            {"claimId": claim.claimId, "amount": claim.amount});
-    string _ = check ctx->callActivity(notifyEmployee,
-            {"claimId": claim.claimId, "message": string `Claim approved and paid: ${paymentRef}`});
-    return {claimId: claim.claimId, status: "APPROVED", paymentRef};
 }

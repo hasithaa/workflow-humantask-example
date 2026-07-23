@@ -3,11 +3,14 @@
 # + claimId - Unique identifier of the claim
 # + employee - Employee submitting the claim
 # + amount - Claimed amount
+# + currency - Claim currency (payments in USD or LKR are rejected by the mock
+#              payment gateway, triggering the retry review)
 # + purpose - What the expense was for
 public type ExpenseClaim record {|
     string claimId;
     string employee;
     decimal amount;
+    string currency = "EUR";
     string purpose;
     Bill[] bills = [];
 |};

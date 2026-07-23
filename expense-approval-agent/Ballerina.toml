@@ -22,3 +22,8 @@ org = "wso2"
 name = "icp.runtime.bridge"
 version = "0.1.10"
 repository = "local"
+
+
+[build-options]
+observabilityIncluded = true
+remoteManagement = true

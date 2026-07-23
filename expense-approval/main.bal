@@ -55,7 +55,7 @@ service /expenses on new http:Listener(9096) {
 # + return - An error when startup fails
 public function main() returns error? {
     io:println("Expense approval service listening on http://localhost:9096/expenses");
-    io:println("  1. Submit claim: curl -X POST localhost:9096/expenses -H 'Content-Type: application/json' -d '{\"claimId\":\"EXP-1\",\"employee\":\"nimal\",\"amount\":180.50,\"purpose\":\"Team lunch\"}'");
+    io:println("  1. Submit claim: curl -X POST localhost:9096/expenses -H 'Content-Type: application/json' -d '{\"claimId\":\"EXP-1\",\"employee\":\"nimal\",\"amount\":180.50,\"currency\":\"EUR\",\"purpose\":\"Team lunch\"}'");
     io:println("  2. Decide the checkExpenseRequest task in the ICP inbox (role: manager)");
     io:println("  3. Submit bills: curl -X POST localhost:9096/expenses/EXP-1/bills -H 'Content-Type: application/json' -d '{\"bills\":[{\"reference\":\"BILL-9\",\"amount\":180.50}]}'");
     io:println("  4. Decide the reviewBills task in the ICP inbox (role: manager)");

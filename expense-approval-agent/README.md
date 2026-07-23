@@ -11,8 +11,12 @@ human tasks, the agent needs **one**:
 - When the bills arrive it validates them (`validateBills`: at least one bill,
   totals match) and only escalates to the single `approveExpense` human task
   when something needs a manager — mismatched totals, missing bills, or an
-  unusually large amount. The gated `processReimbursement` keeps every payout
-  behind a manager review regardless.
+  unusually large amount. The gated `makePayment` keeps every payout behind a
+  manager review regardless — and it carries a **Human Review** retry policy:
+  the mock gateway rejects **USD or LKR** payments, turning the failure into a
+  manager retry review instead of a failed run. `notifyEmployee` carries an
+  **Auto Retry** policy and recovers from the mock notification service failing
+  every other call.
 
 Human tasks and reviews are decided in the ICP task inbox; the service exposes
 no task-completion API.
@@ -28,7 +32,7 @@ bal run
 ```sh
 # 1. Submit a claim without bills (the agent will ask for them)
 curl -X POST localhost:9098/expenses -H 'Content-Type: application/json' \
-  -d '{"claimId":"EXP-A1","employee":"nimal","amount":180.50,"purpose":"Team lunch"}'
+  -d '{"claimId":"EXP-A1","employee":"nimal","amount":180.50,"currency":"EUR","purpose":"Team lunch"}'
 
 # 2. Watch the service log: the agent's requestBill notification asks for the bills
 
@@ -45,7 +49,8 @@ curl localhost:9098/expenses/EXP-A1
 ```
 
 Tip: submit mismatching bills (e.g. `"amount": 120.00`) to see the agent escalate
-to the human task.
+to the human task, or submit the claim with `"currency":"USD"` to see the payment
+fail into a manager retry review after the gated approval.
 
 ## Requirements
 

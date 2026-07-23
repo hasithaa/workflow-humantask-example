@@ -10,6 +10,17 @@ task inbox:
    matches the claim) and creates `reviewBills` — approve to reimburse, or
    reject.
 
+On approval the workflow pays the claim and notifies the employee — and both
+activities demo the retry policies:
+
+- `makePayment` (not gated) runs with a **Human Review** retry policy
+  (`retryPolicy = "manager"`): the mock gateway rejects payments in **USD or
+  LKR**, and instead of failing the workflow the error becomes a retry review
+  task in the ICP inbox where a manager can fix the inputs and re-run.
+- `notifyEmployee` runs with an **Auto Retry** policy (`{maxRetries: 3}`): the
+  mock notification service fails every other call, and the engine retries it
+  transparently.
+
 The workflow durably suspends on each task and on the bill submission for as
 long as they take, surviving restarts. Human tasks are completed through the
 ICP UI — the service exposes no task-completion API.
@@ -25,7 +36,7 @@ bal run
 ```sh
 # 1. Submit a claim (starts the workflow)
 curl -X POST localhost:9096/expenses -H 'Content-Type: application/json' \
-  -d '{"claimId":"EXP-1","employee":"nimal","amount":180.50,"purpose":"Team lunch"}'
+  -d '{"claimId":"EXP-1","employee":"nimal","amount":180.50,"currency":"EUR","purpose":"Team lunch"}'
 
 # 2. In the ICP task inbox (role: manager, e.g. alice), decide checkExpenseRequest:
 #    choose action REQUEST_BILL (or REJECT to end the claim)
@@ -39,6 +50,12 @@ curl -X POST localhost:9096/expenses/EXP-1/bills -H 'Content-Type: application/j
 # 5. Read the outcome (IN_REVIEW while a task or the bills are pending)
 curl localhost:9096/expenses/EXP-1
 ```
+
+To see the **Human Review retry**, submit a claim with `"currency":"USD"` (or
+`LKR`) and approve it: the payment fails, and a retry review task appears in the
+ICP inbox where the manager can correct the currency and retry. The **Auto
+Retry** shows up in the service log — every other `notifyEmployee` call fails
+and is retried by the engine.
 
 ## Requirements
 
